@@ -11,7 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 const ticketRoutes = require('./routes/ticket');
+const authRoutes = require('./routes/auth');
+
+app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
+
 
 
 // Start the server

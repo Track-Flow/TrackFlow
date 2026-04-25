@@ -1,9 +1,10 @@
 const pool = require('../config/db');
 const router = require('express').Router();
+const { authenticateToken } = require('../middleware/auth');
 
 
 //get all tickets
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken,async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM ticket');
         res.json(rows);
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
 
 
 //get ticket by id
-router.get('/:id', async (req, res) => {
+router.get('/:id',authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const [rows] = await pool.query('SELECT * FROM ticket WHERE ticket_id = ?', [id]); 
