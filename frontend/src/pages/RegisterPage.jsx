@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const LOGO_BLUE = '#2ec8ff';
 const BG        = '#0a1628';
@@ -71,7 +72,9 @@ function PasswordStrength({ password }) {
   );
 }
 
-export default function RegisterPage({ onLogin }) {
+export default function RegisterPage() {
+
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     userId: '', firstName: '', lastName: '', email: '', password: '', confirm: '',
   });
@@ -109,7 +112,7 @@ export default function RegisterPage({ onLogin }) {
     });
 
     setSuccess(true);
-    setTimeout(() => onLogin?.(), 1500);
+    setTimeout(() => navigate('/login'), 2000);
 
   } catch (err) {
     setError(err.response?.data?.error ?? 'Registration failed. Please try again.');
@@ -215,7 +218,7 @@ export default function RegisterPage({ onLogin }) {
           <Box sx={{ textAlign: 'center' }}>
             <Typography sx={{ fontSize: 13.5, color: '#5b6d8a' }}>
               Already have an account?{' '}
-              <Typography component="span" onClick={onLogin}
+              <Typography component="span" onClick={() => navigate('/login')}
                 sx={{ color: LOGO_BLUE, fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
                 Sign in
               </Typography>
