@@ -8,6 +8,7 @@ import TLAHome      from './pages/TLAHome';
 import ManagerHome  from './pages/ManagerHome';
 import EndUserHome  from './pages/EndUserHome';
 import HelpdeskHome from './pages/HelpdeskHome';
+import AccessManagement from './pages/AcessManagement';
 import Stub         from './pages/Stub';
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
@@ -74,7 +75,8 @@ export default function App() {
           {/* Help Desk */}
           <Route path="/helpdesk"         element={<PrivateRoute roles={['admin']}><HelpdeskHome /></PrivateRoute>} />
           <Route path="/helpdesk/tickets" element={<PrivateRoute roles={['admin']}><Stub title="All tickets" icon="confirmation_number" /></PrivateRoute>} />
-          <Route path="/helpdesk/users"   element={<PrivateRoute roles={['admin']}><Stub title="User access" icon="manage_accounts" /></PrivateRoute>} />
+          <Route path="/helpdesk/users" element={<PrivateRoute roles={['admin']}><AccessManagement /></PrivateRoute>} />
+
           <Route path="/helpdesk/cats"    element={<PrivateRoute roles={['admin']}><Stub title="Categories" icon="category" /></PrivateRoute>} />
           <Route path="/helpdesk/audit"   element={<PrivateRoute roles={['admin']}><Stub title="Audit log" icon="shield" /></PrivateRoute>} />
 

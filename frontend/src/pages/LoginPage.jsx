@@ -84,7 +84,7 @@ function GlowBlob({
   );
 }
 
-export default function LoginPage({ onRegister }) {
+export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -266,7 +266,7 @@ export default function LoginPage({ onRegister }) {
               New to TrackFlow?{" "}
               <Typography
                 component="span"
-                onClick={onRegister}
+                onClick={() => navigate('/register')}
                 sx={{
                   color: LOGO_BLUE,
                   fontWeight: 600,
