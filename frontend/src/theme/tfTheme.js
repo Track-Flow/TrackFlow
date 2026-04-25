@@ -23,12 +23,12 @@ const tfTheme = createTheme({
   shape: { borderRadius: 10 },
   typography: {
     fontFamily: '"Inter", "Helvetica Neue", system-ui, sans-serif',
-    h1: { fontFamily: '"Rubik", "Helvetica Neue", sans-serif', fontWeight: 600, letterSpacing: '-0.02em' },
-    h2: { fontFamily: '"Rubik", "Helvetica Neue", sans-serif', fontWeight: 600, letterSpacing: '-0.02em' },
-    h3: { fontFamily: '"Rubik", "Helvetica Neue", sans-serif', fontWeight: 600, letterSpacing: '-0.01em' },
-    h4: { fontFamily: '"Rubik", "Helvetica Neue", sans-serif', fontWeight: 600, letterSpacing: '-0.01em', fontSize: 22 },
-    h5: { fontFamily: '"Rubik", "Helvetica Neue", sans-serif', fontWeight: 600, fontSize: 18 },
-    h6: { fontFamily: '"Rubik", "Helvetica Neue", sans-serif', fontWeight: 600, fontSize: 15, letterSpacing: '0.02em' },
+    h1: { fontFamily: '"Rubik", sans-serif', fontWeight: 600, letterSpacing: '-0.02em' },
+    h2: { fontFamily: '"Rubik", sans-serif', fontWeight: 600, letterSpacing: '-0.02em' },
+    h3: { fontFamily: '"Rubik", sans-serif', fontWeight: 600, letterSpacing: '-0.01em' },
+    h4: { fontFamily: '"Rubik", sans-serif', fontWeight: 600, letterSpacing: '-0.01em', fontSize: 22 },
+    h5: { fontFamily: '"Rubik", sans-serif', fontWeight: 600, fontSize: 18 },
+    h6: { fontFamily: '"Rubik", sans-serif', fontWeight: 600, fontSize: 15, letterSpacing: '0.02em' },
     button: { textTransform: 'none', fontWeight: 600 },
     overline: { letterSpacing: '0.14em', fontWeight: 600, fontSize: 11 },
   },
@@ -41,10 +41,7 @@ const tfTheme = createTheme({
     },
     MuiPaper: {
       styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-          border: '1px solid rgba(143,162,192,0.10)',
-        },
+        root: { backgroundImage: 'none', border: '1px solid rgba(143,162,192,0.10)' },
       },
     },
     MuiCard: {
@@ -73,12 +70,6 @@ const tfTheme = createTheme({
         },
       },
     },
-    MuiChip: {
-      styleOverrides: {
-        root: { fontWeight: 600, letterSpacing: 0.2 },
-        outlined: { borderColor: 'rgba(143,162,192,0.25)' },
-      },
-    },
     MuiTextField: {
       defaultProps: { size: 'small', variant: 'outlined' },
     },
@@ -92,17 +83,10 @@ const tfTheme = createTheme({
         },
       },
     },
-    MuiListItemButton: {
+    MuiChip: {
       styleOverrides: {
-        root: {
-          borderRadius: 6,
-          '&.Mui-selected': {
-            background: 'rgba(46,200,255,0.10)',
-            boxShadow: 'inset 2px 0 0 #2ec8ff',
-            '&:hover': { background: 'rgba(46,200,255,0.14)' },
-          },
-          '&:hover': { background: 'rgba(143,162,192,0.06)' },
-        },
+        root: { fontWeight: 600, letterSpacing: 0.2 },
+        outlined: { borderColor: 'rgba(143,162,192,0.25)' },
       },
     },
     MuiTableCell: {
@@ -121,6 +105,19 @@ const tfTheme = createTheme({
       styleOverrides: {
         root: { height: 6, borderRadius: 3, backgroundColor: 'rgba(143,162,192,0.15)' },
         bar: { borderRadius: 3, backgroundColor: '#2ec8ff' },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          '&.Mui-selected': {
+            background: 'rgba(46,200,255,0.10)',
+            boxShadow: 'inset 2px 0 0 #2ec8ff',
+            '&:hover': { background: 'rgba(46,200,255,0.14)' },
+          },
+          '&:hover': { background: 'rgba(143,162,192,0.06)' },
+        },
       },
     },
   },
