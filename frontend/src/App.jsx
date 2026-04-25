@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import tfTheme       from './theme/tfTheme';
-import LoginPage     from './pages/LoginPage';
-import RegisterPage  from './pages/RegisterPage';
-import TLAHome       from './pages/TLAHome';
-import ManagerHome   from './pages/ManagerHome';
-import EndUserHome   from './pages/EndUserHome';
-import HelpdeskHome  from './pages/HelpDeskHome';
+import tfTheme      from './theme/tfTheme';
+import Shell        from './components/Shell';
+import LoginPage    from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import TLAHome      from './pages/TLAHome';
+import ManagerHome  from './pages/ManagerHome';
+import EndUserHome  from './pages/EndUserHome';
+import HelpdeskHome from './pages/HelpdeskHome';
+import Stub         from './pages/Stub';
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -15,13 +17,7 @@ function getUser() {
   catch { return null; }
 }
 
-function getToken() {
-  return localStorage.getItem('tf_token');
-}
-
-// ─── Role → route map ─────────────────────────────────────────────────────────
-
-const ROLE_ROUTES = {
+const ROLE_HOME = {
   tla:         '/tla',
   mss_manager: '/manager',
   end_user:    '/home',
@@ -30,21 +26,18 @@ const ROLE_ROUTES = {
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
-/** Redirects to login if not authenticated, or wrong role */
 function PrivateRoute({ children, roles }) {
-  const token = getToken();
+  const token = localStorage.getItem('tf_token');
   const user  = getUser();
-
-  if (!token || !user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
-  return children;
+  if (!token || !user)                      return <Navigate to="/login"  replace />;
+  if (roles && !roles.includes(user.role))  return <Navigate to="/"      replace />;
+  return <Shell>{children}</Shell>;
 }
 
-/** After login, redirect to the correct home based on role */
 function RoleRedirect() {
   const user = getUser();
   if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={ROLE_ROUTES[user.role] ?? '/login'} replace />;
+  return <Navigate to={ROLE_HOME[user.role] ?? '/login'} replace />;
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -55,17 +48,37 @@ export default function App() {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
+          {/* Public */}
           <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected role routes */}
-          <Route path="/tla"      element={<PrivateRoute roles={['tla']}        ><TLAHome      /></PrivateRoute>} />
-          <Route path="/manager"  element={<PrivateRoute roles={['mss_manager']}><ManagerHome  /></PrivateRoute>} />
-          <Route path="/home"     element={<PrivateRoute roles={['end_user']}   ><EndUserHome  /></PrivateRoute>} />
-          <Route path="/helpdesk" element={<PrivateRoute roles={['admin']}      ><HelpdeskHome /></PrivateRoute>} />
+          {/* TLA */}
+          <Route path="/tla"       element={<PrivateRoute roles={['tla']}><TLAHome /></PrivateRoute>} />
+          <Route path="/tla/board" element={<PrivateRoute roles={['tla']}><Stub title="Board" icon="view_kanban" /></PrivateRoute>} />
+          <Route path="/tla/queue" element={<PrivateRoute roles={['tla']}><Stub title="My queue" icon="confirmation_number" /></PrivateRoute>} />
+          <Route path="/tla/inbox" element={<PrivateRoute roles={['tla']}><Stub title="Inbox" icon="inbox" /></PrivateRoute>} />
 
-          {/* Catch-all — redirect based on role */}
+          {/* MSS Manager */}
+          <Route path="/manager"         element={<PrivateRoute roles={['mss_manager']}><ManagerHome /></PrivateRoute>} />
+          <Route path="/manager/tickets" element={<PrivateRoute roles={['mss_manager']}><Stub title="All tickets" icon="confirmation_number" /></PrivateRoute>} />
+          <Route path="/manager/depts"   element={<PrivateRoute roles={['mss_manager']}><Stub title="Departments" icon="groups" /></PrivateRoute>} />
+          <Route path="/manager/reports" element={<PrivateRoute roles={['mss_manager']}><Stub title="Reports" icon="analytics" /></PrivateRoute>} />
+          <Route path="/manager/tlas"    element={<PrivateRoute roles={['mss_manager']}><Stub title="TLAs" icon="badge" /></PrivateRoute>} />
+
+          {/* End User */}
+          <Route path="/home"         element={<PrivateRoute roles={['end_user']}><EndUserHome /></PrivateRoute>} />
+          <Route path="/submit"       element={<PrivateRoute roles={['end_user']}><Stub title="Submit ticket" icon="add_circle" /></PrivateRoute>} />
+          <Route path="/home/tickets" element={<PrivateRoute roles={['end_user']}><Stub title="My tickets" icon="confirmation_number" /></PrivateRoute>} />
+          <Route path="/home/inbox"   element={<PrivateRoute roles={['end_user']}><Stub title="Notifications" icon="notifications" /></PrivateRoute>} />
+
+          {/* Help Desk */}
+          <Route path="/helpdesk"         element={<PrivateRoute roles={['admin']}><HelpdeskHome /></PrivateRoute>} />
+          <Route path="/helpdesk/tickets" element={<PrivateRoute roles={['admin']}><Stub title="All tickets" icon="confirmation_number" /></PrivateRoute>} />
+          <Route path="/helpdesk/users"   element={<PrivateRoute roles={['admin']}><Stub title="User access" icon="manage_accounts" /></PrivateRoute>} />
+          <Route path="/helpdesk/cats"    element={<PrivateRoute roles={['admin']}><Stub title="Categories" icon="category" /></PrivateRoute>} />
+          <Route path="/helpdesk/audit"   element={<PrivateRoute roles={['admin']}><Stub title="Audit log" icon="shield" /></PrivateRoute>} />
+
+          {/* Catch-all */}
           <Route path="*" element={<RoleRedirect />} />
         </Routes>
       </BrowserRouter>
