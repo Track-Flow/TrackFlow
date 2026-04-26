@@ -13,11 +13,14 @@ app.use(express.json());
 const ticketRoutes = require('./routes/ticket');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const categoriesRoutes = require('./routes/categories');
+
 const { authenticateToken } = require('./middleware/auth');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/tickets', ticketRoutes);
+app.use('/api/tickets',authenticateToken, ticketRoutes);
 app.use('/api/admin',authenticateToken, adminRoutes);
+app.use('/api/categories', authenticateToken, categoriesRoutes);
 
 
 // Start the server

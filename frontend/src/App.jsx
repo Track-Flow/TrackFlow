@@ -10,6 +10,9 @@ import EndUserHome  from './pages/EndUserHome';
 import HelpdeskHome from './pages/HelpdeskHome';
 import AccessManagement from './pages/AcessManagement';
 import Stub         from './pages/Stub';
+import SubmitTicket  from './pages/SubmitTicket';
+import TicketDetail  from './pages/TicketDetail';
+import MyTickets     from './pages/MyTickets';
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -59,6 +62,8 @@ export default function App() {
           <Route path="/tla/queue" element={<PrivateRoute roles={['tla']}><Stub title="My queue" icon="confirmation_number" /></PrivateRoute>} />
           <Route path="/tla/inbox" element={<PrivateRoute roles={['tla']}><Stub title="Inbox" icon="inbox" /></PrivateRoute>} />
 
+
+
           {/* MSS Manager */}
           <Route path="/manager"         element={<PrivateRoute roles={['mss_manager']}><ManagerHome /></PrivateRoute>} />
           <Route path="/manager/tickets" element={<PrivateRoute roles={['mss_manager']}><Stub title="All tickets" icon="confirmation_number" /></PrivateRoute>} />
@@ -68,9 +73,11 @@ export default function App() {
 
           {/* End User */}
           <Route path="/home"         element={<PrivateRoute roles={['end_user']}><EndUserHome /></PrivateRoute>} />
-          <Route path="/submit"       element={<PrivateRoute roles={['end_user']}><Stub title="Submit ticket" icon="add_circle" /></PrivateRoute>} />
-          <Route path="/home/tickets" element={<PrivateRoute roles={['end_user']}><Stub title="My tickets" icon="confirmation_number" /></PrivateRoute>} />
+          <Route path="/submit" element={<PrivateRoute roles={['end_user']}><SubmitTicket /></PrivateRoute>} />
+          <Route path="/home/tickets" element={<PrivateRoute roles={['end_user']}><MyTickets /></PrivateRoute>} />
           <Route path="/home/inbox"   element={<PrivateRoute roles={['end_user']}><Stub title="Notifications" icon="notifications" /></PrivateRoute>} />
+          <Route path="/tickets/:id" element={<PrivateRoute roles={['tla','mss_manager','end_user','admin']}><TicketDetail /></PrivateRoute>} />
+
 
           {/* Help Desk */}
           <Route path="/helpdesk"         element={<PrivateRoute roles={['admin']}><HelpdeskHome /></PrivateRoute>} />

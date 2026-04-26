@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Box, Card, Typography, Button, CircularProgress, Alert, Select, MenuItem, FormControl } from '@mui/material';
 import api from '../helpers/api';
 import { getUnrouted, priorityMeta, timeAgo } from '../helpers/ticketHelpers';
+import { useNavigate } from 'react-router-dom';
 
 const ACCENT = '#ffb547';
 const PAPER  = '#0f1f3a';
@@ -19,6 +20,7 @@ function TicketRow({ ticket, onRoute }) {
   const [deptId,  setDeptId]  = useState('');
   const [routing, setRouting] = useState(false);
   const { color: pColor } = priorityMeta(ticket.ticket_priority ?? 'low');
+ const navigate = useNavigate();
 
   const handleRoute = async () => {
     if (!deptId) return;
@@ -28,7 +30,10 @@ function TicketRow({ ticket, onRoute }) {
   };
 
   return (
-    <Box sx={{
+    <Box 
+          onClick={() => navigate(`/tickets/${ticket.ticket_id}`)} 
+
+     sx={{
       position: 'relative', display: 'flex', alignItems: 'center',
       gap: 2, p: 2, borderBottom: `1px solid ${BORDER}`,
       '&:hover': { bgcolor: 'rgba(255,181,71,0.03)' },
