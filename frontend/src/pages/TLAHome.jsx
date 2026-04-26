@@ -91,7 +91,7 @@ function TicketRow({ ticket, myId, onClaim, onUpdateStatus }) {
   const { color: pColor }                = priorityMeta(ticket.ticket_priority ?? 'low');
   const isAssignedToMe = ticket.assignee_id === myId;
   const priorityColor  = getPriorityChipColor(ticket.ticket_priority);
-  const initials       = getInitials(ticket.user_id ?? '??');
+const initials = getInitials(ticket.user_name ?? ticket.user_id ?? '??');
 
   return (
     <Box sx={{
