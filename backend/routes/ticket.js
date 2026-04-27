@@ -93,7 +93,7 @@ router.post("/", authenticateToken, async (req, res) => {
 });
 
 // PUT /api/tickets/:id
-router.put("/:id", authenticateToken, async (req, res) => {
+router.patch("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const {
     ticket_title,
@@ -101,9 +101,10 @@ router.put("/:id", authenticateToken, async (req, res) => {
     ticket_status,
     ticket_escalated,
     category_id,
-    assigned_to,
+    assignee_id,
   } = req.body;
-  const requesting_user_id = req.user.id;
+
+  const requesting_user_id   = req.user.id;
   const requesting_user_role = req.user.role;
 
   let conn;
@@ -113,7 +114,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
     // --- Check ticket exists ---
     const [tickets] = await conn.query(
       "SELECT * FROM ticket WHERE ticket_id = ?",
-      [id],
+      [id]
     );
     if (tickets.length === 0) {
       return res.status(404).json({ error: "Ticket not found." });
@@ -121,22 +122,18 @@ router.put("/:id", authenticateToken, async (req, res) => {
 
     const ticket = tickets[0];
 
-    // --- Authorisation rules ---
-    // Staff can only update their own tickets, and only title/description while status is 'open'
-    if (requesting_user_role === "staff") {
+    // --- Authorisation ---
+    // end_user can only edit their own open tickets (title/description only)
+    if (requesting_user_role === "end_user") {
       if (ticket.user_id !== requesting_user_id) {
-        return res
-          .status(403)
-          .json({ error: "You are not authorised to update this ticket." });
+        return res.status(403).json({ error: "Not authorised to update this ticket." });
       }
       if (ticket.ticket_status !== "open") {
-        return res
-          .status(403)
-          .json({ error: "You can only edit tickets that are still open." });
+        return res.status(403).json({ error: "You can only edit tickets that are still open." });
       }
     }
 
-    // --- Build dynamic update fields ---
+    // --- Build dynamic update ---
     const fields = [];
     const values = [];
 
@@ -150,22 +147,13 @@ router.put("/:id", authenticateToken, async (req, res) => {
       values.push(ticket_description);
     }
 
-    // Only technicians/managers/admins can update status, escalation, and assignment
-    if (requesting_user_role !== "staff") {
+    // Only tla / mss_manager / admin can update these fields
+    if (requesting_user_role !== "end_user") {
+
       if (ticket_status !== undefined) {
-        const validStatuses = [
-          "open",
-          "in_progress",
-          "escalated",
-          "resolved",
-          "closed",
-        ];
+        const validStatuses = ["open", "in_progress", "pending", "resolved", "closed"];
         if (!validStatuses.includes(ticket_status)) {
-          return res
-            .status(400)
-            .json({
-              error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
-            });
+          return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
         }
         fields.push("ticket_status = ?");
         values.push(ticket_status);
@@ -176,32 +164,29 @@ router.put("/:id", authenticateToken, async (req, res) => {
         values.push(ticket_escalated ? 1 : 0);
       }
 
-      if (assigned_to !== undefined) {
-        // Verify the assigned user exists and is a technician
+      if (assignee_id !== undefined) {
+        // Verify assignee exists and is a TLA
         const [assignee] = await conn.query(
-          "SELECT user_id FROM users WHERE user_id = ? AND role = ?",
-          [assigned_to, "technician"],
+          "SELECT user_id FROM user WHERE user_id = ? AND user_role = ?",
+          [assignee_id, "tla"]
         );
         if (assignee.length === 0) {
-          return res
-            .status(404)
-            .json({ error: "Assigned technician not found." });
+          return res.status(404).json({ error: "Assigned TLA not found." });
         }
-        fields.push("assigned_to = ?");
-        values.push(assigned_to);
+        fields.push("assigned_user_id = ?");
+        values.push(assignee_id);
       }
 
       if (category_id !== undefined) {
         const [categories] = await conn.query(
-          "SELECT department_id, category_name FROM categories WHERE category_id = ?",
-          [category_id],
+          "SELECT department_id, category_name FROM category WHERE category_id = ?",
+          [category_id]
         );
         if (categories.length === 0) {
           return res.status(404).json({ error: "Category not found." });
         }
         const { department_id, category_name } = categories[0];
         const isOther = category_name?.toLowerCase() === "other";
-
         fields.push("category_id = ?");
         values.push(category_id);
         fields.push("department_id = ?");
@@ -210,30 +195,23 @@ router.put("/:id", authenticateToken, async (req, res) => {
     }
 
     if (fields.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "No valid fields provided for update." });
+      return res.status(400).json({ error: "No valid fields provided for update." });
     }
 
-    // --- Add updated_at timestamp ---
-    fields.push("updated_at = NOW()");
-
-    // --- Execute update ---
+    fields.push("ticket_updated_at = NOW()");
     values.push(id);
+
     await conn.query(
       `UPDATE ticket SET ${fields.join(", ")} WHERE ticket_id = ?`,
-      values,
+      values
     );
 
-    // --- Return updated ticket ---
     const [updated] = await conn.query(
       "SELECT * FROM ticket WHERE ticket_id = ?",
-      [id],
+      [id]
     );
-    return res.status(200).json({
-      message: "Ticket updated successfully.",
-      ticket: updated[0],
-    });
+    return res.status(200).json({ message: "Ticket updated successfully.", ticket: updated[0] });
+
   } catch (err) {
     console.error("Update ticket error:", err);
     return res.status(500).json({ error: "Internal server error." });
