@@ -13,6 +13,7 @@ import Stub         from './pages/Stub';
 import SubmitTicket  from './pages/SubmitTicket';
 import TicketDetail  from './pages/TicketDetail';
 import MyTickets     from './pages/MyTickets';
+import TLABoard from './pages/TLABoard';
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export default function App() {
 
           {/* TLA */}
           <Route path="/tla"       element={<PrivateRoute roles={['tla']}><TLAHome /></PrivateRoute>} />
-          <Route path="/tla/board" element={<PrivateRoute roles={['tla']}><Stub title="Board" icon="view_kanban" /></PrivateRoute>} />
+          <Route path="/tla/board" element={<PrivateRoute roles={['tla']}><TLABoard /></PrivateRoute>} />
           <Route path="/tla/queue" element={<PrivateRoute roles={['tla']}><Stub title="My queue" icon="confirmation_number" /></PrivateRoute>} />
           <Route path="/tla/inbox" element={<PrivateRoute roles={['tla']}><Stub title="Inbox" icon="inbox" /></PrivateRoute>} />
 
