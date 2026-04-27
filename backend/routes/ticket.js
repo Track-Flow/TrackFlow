@@ -3,18 +3,18 @@ const router = require("express").Router();
 const { authenticateToken } = require("../middleware/auth");
 
 //get all tickets
-router.get("/", authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-  const [rows] = await pool.query(`
-  SELECT t.*, u.user_name, d.department_name
-  FROM ticket t
-  LEFT JOIN user u ON t.user_id = u.user_id
-  LEFT JOIN department d ON t.department_id = d.department_id
-`);
+    const [rows] = await pool.query(`
+      SELECT t.*, u.user_name, d.department_name
+      FROM ticket t
+      LEFT JOIN user u ON t.user_id = u.user_id
+      LEFT JOIN department d ON t.department_id = d.department_id
+    `);
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
