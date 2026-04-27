@@ -131,10 +131,10 @@ const initials = getInitials(ticket.user_name ?? ticket.user_id ?? '??');
           </Box>
 
           {/* Department */}
-          {ticket.department_id && (
+          {ticket.department_name && (
             <Box sx={{ px: 0.75, py: 0.1, borderRadius: 0.75, fontSize: 10, fontWeight: 600,
               bgcolor: 'rgba(46,200,255,0.1)', color: '#6fdcff', border: '1px solid rgba(46,200,255,0.2)' }}>
-              · {ticket.department_id}
+              · {ticket.department_name}
             </Box>
           )}
 

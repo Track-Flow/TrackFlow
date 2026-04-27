@@ -38,13 +38,13 @@ function TicketTableRow({ ticket, onClick }) {
 
       {/* Department */}
       <Box>
-        {ticket.department_id ? (
+        {ticket.department_name ? (
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75,
             px: 1, py: 0.3, borderRadius: 999,
             bgcolor: 'rgba(46,200,255,0.10)', border: '1px solid rgba(46,200,255,0.2)' }}>
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: ACCENT }} />
             <Typography sx={{ fontSize: 11.5, color: ACCENT, fontWeight: 600 }}>
-              {ticket.department_id}
+              {ticket.department_name}
             </Typography>
           </Box>
         ) : (
