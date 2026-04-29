@@ -14,7 +14,7 @@ import SubmitTicket  from './pages/SubmitTicket';
 import TicketDetail  from './pages/TicketDetail';
 import MyTickets     from './pages/MyTickets';
 import TLABoard from './pages/TLABoard';
-
+import ManagerReports from './pages/ManageReports';
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
 function getUser() {
@@ -69,7 +69,7 @@ export default function App() {
           <Route path="/manager"         element={<PrivateRoute roles={['mss_manager']}><ManagerHome /></PrivateRoute>} />
           <Route path="/manager/tickets" element={<PrivateRoute roles={['mss_manager']}><Stub title="All tickets" icon="confirmation_number" /></PrivateRoute>} />
           <Route path="/manager/depts"   element={<PrivateRoute roles={['mss_manager']}><Stub title="Departments" icon="groups" /></PrivateRoute>} />
-          <Route path="/manager/reports" element={<PrivateRoute roles={['mss_manager']}><Stub title="Reports" icon="analytics" /></PrivateRoute>} />
+          <Route path="/manager/reports" element={<PrivateRoute roles={['mss_manager']}><ManagerReports /></PrivateRoute>} />
           <Route path="/manager/tlas"    element={<PrivateRoute roles={['mss_manager']}><Stub title="TLAs" icon="badge" /></PrivateRoute>} />
 
           {/* End User */}
