@@ -92,7 +92,7 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// PUT /api/tickets/:id
+// Patch /api/tickets/:id
 router.patch("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const {
