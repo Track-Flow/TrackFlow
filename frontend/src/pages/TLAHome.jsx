@@ -27,13 +27,17 @@ import {
 
 // ─── Theme tokens ─────────────────────────────────────────────────────────────
 const ACCENT = "#2ec8ff";
-const PAPER = "#0f1f3a";
+const PAPER  = "#0f1f3a";
 const BORDER = "rgba(143,162,192,0.12)";
-const BG = "#0a1628";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getInitials(name = "") {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function firstName(fullName) {
+  if (!fullName) return "?";
+  return fullName.split(" ")[0];
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
@@ -45,9 +49,7 @@ function KpiCard({ label, value, icon, color, sub, subUp }) {
         <span className="material-symbols-outlined" style={{ fontSize: 18, color }}>{icon}</span>
       </Box>
       <Typography sx={{ fontSize: 28, fontWeight: 700, color, fontFamily: '"Rubik", sans-serif', lineHeight: 1 }}>{value}</Typography>
-      {sub && (
-        <Typography sx={{ fontSize: 11, color: subUp ? "#2bd48f" : "#8fa2c0", mt: 0.75 }}>{sub}</Typography>
-      )}
+      {sub && <Typography sx={{ fontSize: 11, color: subUp ? "#2bd48f" : "#8fa2c0", mt: 0.75 }}>{sub}</Typography>}
     </Card>
   );
 }
@@ -72,19 +74,11 @@ function FilterChip({ label, count, active, onClick }) {
   );
 }
 
-// ─── Resolution Notes Dialog ──────────────────────────────────────────────────
+// ─── Resolution Dialog ────────────────────────────────────────────────────────
 function ResolutionDialog({ open, onConfirm, onCancel }) {
   const [notes, setNotes] = useState("");
-
-  const handleConfirm = () => {
-    onConfirm(notes);
-    setNotes("");
-  };
-
-  const handleCancel = () => {
-    setNotes("");
-    onCancel();
-  };
+  const handleConfirm = () => { onConfirm(notes); setNotes(""); };
+  const handleCancel  = () => { onCancel();        setNotes(""); };
 
   return (
     <Dialog
@@ -102,13 +96,10 @@ function ResolutionDialog({ open, onConfirm, onCancel }) {
       </DialogTitle>
       <DialogContent>
         <Typography sx={{ color: "#8fa2c0", fontSize: 13, mb: 2 }}>
-          Please provide resolution notes before marking this ticket as resolved.
+          Please provide resolution notes before marking this task as resolved.
         </Typography>
         <TextField
-          autoFocus
-          multiline
-          rows={4}
-          fullWidth
+          autoFocus multiline rows={4} fullWidth
           placeholder="Describe how the issue was resolved..."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -138,11 +129,16 @@ function ResolutionDialog({ open, onConfirm, onCancel }) {
   );
 }
 
-// ─── Ticket row ───────────────────────────────────────────────────────────────
+// ─── Ticket Row ───────────────────────────────────────────────────────────────
 function TicketRow({ ticket, myId, onClaim, onUpdateStatus, onResolveClick }) {
   const navigate = useNavigate();
   const { color: pColor, label: pLabel } = priorityMeta(ticket.ticket_priority ?? "low");
-  const isAssignedToMe = ticket.assignee_id === myId || ticket.assigned_user_id === myId;
+
+  // support both field names
+  const assignedUserId = ticket.assigned_user_id ?? ticket.assignee_id;
+  const isAssignedToMe = assignedUserId === myId;
+  const isResolved     = ticket.ticket_status === "resolved";
+  const isClaimed      = !!assignedUserId;
 
   return (
     <Box sx={{ p: 2, borderBottom: `1px solid ${BORDER}`, display: "flex", gap: 2, alignItems: "flex-start", "&:last-child": { borderBottom: "none" } }}>
@@ -171,23 +167,23 @@ function TicketRow({ ticket, myId, onClaim, onUpdateStatus, onResolveClick }) {
           {ticket.ticket_title}
         </Typography>
 
+        {/* Submitter + assignee first name */}
         <Typography sx={{ fontSize: 12, color: "#8fa2c0" }}>
           {ticket.user_name ?? ticket.user_id ?? "Unknown user"}
-          {ticket.assignee_name && (
-            <span> · <span style={{ color: "#6fdcff" }}>↗ {ticket.assignee_name}</span></span>
-          )}
-          {ticket.assignee_id && !ticket.assignee_name && (
-            <span> · <span style={{ color: "#6fdcff" }}>↗ {ticket.assignee_id}</span></span>
-          )}
-          {!ticket.assignee_id && !ticket.assigned_user_id && (
+          {ticket.assignee_name ? (
+            <span> · <span style={{ color: "#6fdcff" }}>↗ {firstName(ticket.assignee_name)}</span></span>
+          ) : assignedUserId ? (
+            <span> · <span style={{ color: "#6fdcff" }}>↗ {assignedUserId}</span></span>
+          ) : (
             <span style={{ color: "#ffb547" }}> · Unassigned</span>
           )}
         </Typography>
       </Box>
 
-      {/* Action buttons */}
+      {/* Actions */}
       <Box sx={{ display: "flex", gap: 1, flexShrink: 0, alignItems: "center" }}>
-        {!ticket.assignee_id && !ticket.assigned_user_id && (
+        {/* Claim — only if unclaimed and not resolved */}
+        {!isClaimed && !isResolved && (
           <Button
             size="small"
             variant="contained"
@@ -198,11 +194,13 @@ function TicketRow({ ticket, myId, onClaim, onUpdateStatus, onResolveClick }) {
             Claim
           </Button>
         )}
+        {/* Start — only if mine and open */}
         {isAssignedToMe && ticket.ticket_status === "open" && (
           <Button size="small" variant="outlined" onClick={() => onUpdateStatus(ticket.ticket_id, "in_progress")} sx={{ fontSize: 11, py: 0.5 }}>
             Start
           </Button>
         )}
+        {/* Resolve — only if mine and in_progress */}
         {isAssignedToMe && ticket.ticket_status === "in_progress" && (
           <Button
             size="small"
@@ -215,25 +213,28 @@ function TicketRow({ ticket, myId, onClaim, onUpdateStatus, onResolveClick }) {
             Resolve
           </Button>
         )}
+        {/* Resolved lock indicator */}
+        {isResolved && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.4, borderRadius: 1, bgcolor: "rgba(43,212,143,0.08)", border: "1px solid rgba(43,212,143,0.2)" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 13, color: "#2bd48f" }}>lock</span>
+            <Typography sx={{ fontSize: 11, color: "#2bd48f", fontWeight: 600 }}>Resolved</Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
 }
 
-// ─── Team pulse item ──────────────────────────────────────────────────────────
-function PulseItem({ event }) {
-  const { color: pColor } = priorityMeta(event.ticket_priority ?? "low");
-  const displayName = event.assignee_name ?? event.assignee_id ?? "A TLA";
-  const initials = getInitials(displayName);
-
-  const actionText =
-    event.action === "claimed"
-      ? "claimed"
-      : event.ticket_status === "in_progress"
-      ? "is working on"
-      : event.ticket_status === "resolved"
-      ? "resolved"
-      : "updated";
+// ─── Team Pulse Item ──────────────────────────────────────────────────────────
+function PulseItem({ ticket }) {
+  const { color: pColor } = priorityMeta(ticket.ticket_priority ?? "low");
+  const fullName   = ticket.assignee_name ?? ticket.assigned_user_id ?? "A TLA";
+  const first      = firstName(fullName);
+  const initials   = getInitials(fullName);
+  const action =
+    ticket.ticket_status === "in_progress" ? "is working on"
+    : ticket.ticket_status === "resolved"  ? "resolved"
+    : "claimed";
 
   return (
     <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
@@ -242,66 +243,52 @@ function PulseItem({ event }) {
       </Avatar>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontSize: 12.5, color: "#e6edf7", lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 700 }}>{displayName}</span>{" "}
-          {actionText}{" "}
+          <span style={{ fontWeight: 700 }}>{first}</span>{" "}
+          {action}{" "}
           <span style={{ fontFamily: "monospace", color: "#5b8ec2", fontSize: 11 }}>
-            {event.ticket_id}
+            #{ticket.ticket_id}
           </span>
           {" · "}
-          <span style={{ color: "#c8d8ee" }} title={event.ticket_title}>
-            {event.ticket_title?.length > 30 ? event.ticket_title.slice(0, 30) + "…" : event.ticket_title}
+          <span style={{ color: "#c8d8ee" }} title={ticket.ticket_title}>
+            {ticket.ticket_title?.length > 30 ? ticket.ticket_title.slice(0, 30) + "…" : ticket.ticket_title}
           </span>
         </Typography>
         <Typography sx={{ fontSize: 11, color: "#3a4f6a", mt: 0.25 }}>
-          {timeAgo(event.updated_at ?? event.created_at)}
+          {timeAgo(ticket.updated_at ?? ticket.created_at)}
         </Typography>
       </Box>
     </Box>
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Filters ──────────────────────────────────────────────────────────────────
 const FILTERS = [
-  { key: "all", label: "All active" },
-  { key: "mine", label: "Assigned to me" },
-  { key: "unassigned", label: "Unassigned" },
-  { key: "sla", label: "SLA breach" },
+  { key: "all",        label: "All active"     },
+  { key: "mine",       label: "Assigned to me" },
+  { key: "unassigned", label: "Unassigned"     },
+  { key: "sla",        label: "SLA breach"     },
 ];
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TLAHome() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("tf_user") ?? "null");
 
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all");
-
-  // Pulse events (augmented with action info)
-  const [pulseEvents, setPulseEvents] = useState([]);
-
-  // Success snackbar
-  const [snack, setSnack] = useState({ open: false, message: "" });
-
-  // Resolve dialog
+  const [tickets,       setTickets]       = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState("");
+  const [filter,        setFilter]        = useState("all");
+  const [snack,         setSnack]         = useState({ open: false, message: "" });
   const [resolveDialog, setResolveDialog] = useState({ open: false, ticket: null });
 
   const fetchTickets = async () => {
     try {
-      const res = await api.get("/api/tickets");
+      const res     = await api.get("/api/tickets");
       const myDeptId = user?.department_id;
       const filtered = res.data.filter((t) =>
         myDeptId ? t.department_id === myDeptId : true
       );
       setTickets(filtered);
-
-      // Build pulse: assigned tickets sorted by updated_at
-      const pulse = [...filtered]
-        .filter((t) => t.assignee_id || t.assigned_user_id)
-        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-        .slice(0, 8)
-        .map((t) => ({ ...t, action: "updated" }));
-      setPulseEvents(pulse);
     } catch (err) {
       setError(err.response?.data?.error ?? "Failed to load tickets.");
     } finally {
@@ -318,19 +305,7 @@ export default function TLAHome() {
   const handleClaim = async (id) => {
     try {
       await api.patch(`/api/tickets/${id}`, { assignee_id: user.id });
-      // Add claimed event to pulse immediately
-      const claimed = tickets.find((t) => t.ticket_id === id);
-      if (claimed) {
-        const claimEvent = {
-          ...claimed,
-          assignee_id: user.id,
-          assignee_name: user.name,
-          action: "claimed",
-          updated_at: new Date().toISOString(),
-        };
-        setPulseEvents((prev) => [claimEvent, ...prev].slice(0, 8));
-      }
-      setSnack({ open: true, message: `Ticket #${id} claimed successfully!` });
+      setSnack({ open: true, message: `Task #${id} claimed successfully!` });
       fetchTickets();
     } catch (err) {
       setError(err.response?.data?.error ?? "Failed to claim.");
@@ -346,52 +321,49 @@ export default function TLAHome() {
     }
   };
 
-  const handleResolveClick = (ticket) => {
-    setResolveDialog({ open: true, ticket });
-  };
-
+  const handleResolveClick  = (ticket) => setResolveDialog({ open: true, ticket });
+  const handleResolveCancel = ()        => setResolveDialog({ open: false, ticket: null });
   const handleResolveConfirm = async (notes) => {
     const { ticket } = resolveDialog;
     setResolveDialog({ open: false, ticket: null });
     try {
-      await api.patch(`/api/tickets/${ticket.ticket_id}`, {
-        ticket_status: "resolved",
-        resolution_notes: notes,
-      });
+      await api.patch(`/api/tickets/${ticket.ticket_id}`, { ticket_status: "resolved", resolution_notes: notes });
       fetchTickets();
     } catch (err) {
       setError(err.response?.data?.error ?? "Failed to resolve.");
     }
   };
 
-  const handleResolveCancel = () => {
-    setResolveDialog({ open: false, ticket: null });
-  };
+  // Derived
+  const active       = tickets.filter((t) => !["resolved", "closed"].includes(t.ticket_status));
+  const myTickets    = tickets.filter((t) => (t.assigned_user_id ?? t.assignee_id) === user?.id);
+  const unassigned   = getUnassigned(tickets);
+  const slaBreaches  = getSLABreaches(tickets);
+  const resolvedToday = tickets.filter((t) =>
+    t.ticket_status === "resolved" &&
+    new Date(t.updated_at).toDateString() === new Date().toDateString()
+  );
 
-  // Derived data
-  const active = tickets.filter((t) => !["resolved", "closed"].includes(t.ticket_status));
-  const myTickets = getMyTickets(tickets, user?.id);
-  const unassigned = getUnassigned(tickets);
-  const slaBreaches = getSLABreaches(tickets);
-  const resolvedToday = tickets.filter((t) => {
-    if (t.ticket_status !== "resolved") return false;
-    return new Date(t.updated_at).toDateString() === new Date().toDateString();
-  });
+  // Team pulse — claimed tickets sorted by recency
+  const teamPulse = [...tickets]
+    .filter((t) => t.assigned_user_id ?? t.assignee_id)
+    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+    .slice(0, 8);
 
   const displayed =
-    filter === "mine" ? myTickets
+    filter === "mine"       ? myTickets
     : filter === "unassigned" ? unassigned
-    : filter === "sla" ? slaBreaches
+    : filter === "sla"        ? slaBreaches
     : active;
 
   const filterCounts = {
-    all: active.length,
-    mine: myTickets.length,
+    all:        active.length,
+    mine:       myTickets.length,
     unassigned: unassigned.length,
-    sla: slaBreaches.length,
+    sla:        slaBreaches.length,
   };
 
-  const hour = new Date().getHours();
+  const hour     = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
@@ -406,31 +378,30 @@ export default function TLAHome() {
             Live operations
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="outlined"
-            onClick={() => navigate("/tla/board")}
-            startIcon={<span className="material-symbols-outlined" style={{ fontSize: 16 }}>view_kanban</span>}
-            sx={{ color: "#8fa2c0", borderColor: BORDER, fontSize: 13 }}
-          >
-            Board
-          </Button>
-        </Box>
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/tla/board")}
+          startIcon={<span className="material-symbols-outlined" style={{ fontSize: 16 }}>view_kanban</span>}
+          sx={{ color: "#8fa2c0", borderColor: BORDER, fontSize: 13 }}
+        >
+          Board
+        </Button>
       </Box>
 
       {/* KPI row */}
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <KpiCard label="Open" value={active.length} icon="confirmation_number" color={ACCENT} sub={`${myTickets.length} assigned to me`} subUp />
-        <KpiCard label="Resolved today" value={resolvedToday.length} icon="check_circle" color="#2bd48f" sub="Today" subUp />
-        <KpiCard label="Avg. resolution" value="—" icon="timer" color="#ffb547" sub="No data yet" subUp={false} />
-        <KpiCard label="Overdue" value={slaBreaches.length} icon="warning" color="#ff6b6b" sub={slaBreaches.length > 0 ? "Needs attention" : "All on track"} subUp={slaBreaches.length === 0} />
+        <KpiCard label="Open"           value={active.length}        icon="confirmation_number" color={ACCENT}   sub={`${myTickets.length} assigned to me`} subUp />
+        <KpiCard label="Resolved today" value={resolvedToday.length} icon="check_circle"        color="#2bd48f" sub="Today" subUp />
+        <KpiCard label="Avg. resolution" value="—"                   icon="timer"               color="#ffb547" sub="No data yet" subUp={false} />
+        <KpiCard label="Overdue"        value={slaBreaches.length}   icon="warning"             color="#ff6b6b" sub={slaBreaches.length > 0 ? "Needs attention" : "All on track"} subUp={slaBreaches.length === 0} />
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
 
-      {/* Main two-column layout */}
+      {/* Main layout */}
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 2.5, alignItems: "start" }}>
-        {/* Left — Ticket feed */}
+
+        {/* Ticket feed */}
         <Card sx={{ bgcolor: PAPER, border: `1px solid ${BORDER}` }}>
           <Box sx={{ p: 2, borderBottom: `1px solid ${BORDER}` }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
@@ -440,7 +411,7 @@ export default function TLAHome() {
               </Box>
               <Typography sx={{ fontSize: 10.5, color: "#5b6d8a", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>Real-time stream</Typography>
             </Box>
-            <Typography variant="h6" sx={{ color: "#e6edf7", mb: 1.5 }}>Ticket feed</Typography>
+            <Typography variant="h6" sx={{ color: "#e6edf7", mb: 1.5 }}>Task feed</Typography>
             <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
               {FILTERS.map((f) => (
                 <FilterChip key={f.key} label={f.label} count={filterCounts[f.key]} active={filter === f.key} onClick={() => setFilter(f.key)} />
@@ -452,7 +423,7 @@ export default function TLAHome() {
           {!loading && displayed.length === 0 && (
             <Box sx={{ p: 6, textAlign: "center" }}>
               <Typography sx={{ color: "#2bd48f", fontWeight: 600 }}>✓ All clear</Typography>
-              <Typography sx={{ color: "#8fa2c0", fontSize: 13, mt: 0.5 }}>No tickets in this queue.</Typography>
+              <Typography sx={{ color: "#8fa2c0", fontSize: 13, mt: 0.5 }}>No tasks in this queue.</Typography>
             </Box>
           )}
           {!loading && displayed.map((t) => (
@@ -467,7 +438,7 @@ export default function TLAHome() {
           ))}
         </Card>
 
-        {/* Right — Team pulse */}
+        {/* Team pulse */}
         <Card sx={{ bgcolor: PAPER, border: `1px solid ${BORDER}` }}>
           <Box sx={{ p: 2, borderBottom: `1px solid ${BORDER}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Box>
@@ -482,11 +453,11 @@ export default function TLAHome() {
 
           <Box sx={{ p: 2 }}>
             {loading && <CircularProgress size={20} sx={{ color: "#c084fc" }} />}
-            {!loading && pulseEvents.length === 0 && (
+            {!loading && teamPulse.length === 0 && (
               <Typography sx={{ color: "#5b6d8a", fontSize: 13 }}>No activity yet.</Typography>
             )}
-            {!loading && pulseEvents.map((event, i) => (
-              <PulseItem key={`${event.ticket_id}-${i}`} event={event} />
+            {!loading && teamPulse.map((t) => (
+              <PulseItem key={t.ticket_id} ticket={t} />
             ))}
           </Box>
         </Card>

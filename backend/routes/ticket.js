@@ -6,10 +6,16 @@ const { authenticateToken } = require("../middleware/auth");
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT t.*, u.user_name, d.department_name
+      SELECT
+        t.*,
+        u.user_name,
+        d.department_name,
+        a.user_name  AS assignee_name,
+        a.user_id    AS assignee_id
       FROM ticket t
-      LEFT JOIN user u ON t.user_id = u.user_id
-      LEFT JOIN department d ON t.department_id = d.department_id
+      LEFT JOIN user u       ON t.user_id          = u.user_id
+      LEFT JOIN department d ON t.department_id     = d.department_id
+      LEFT JOIN user a       ON t.assigned_user_id  = a.user_id
     `);
     res.json(rows);
   } catch (err) {
@@ -19,11 +25,24 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 //get ticket by id
+//get ticket by id
 router.get("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await pool.query(
-      "SELECT * FROM ticket WHERE ticket_id = ?",
+      `SELECT
+        t.*,
+        u.user_name,
+        d.department_name,
+        c.category_name,
+        a.user_name AS assignee_name,
+        a.user_id   AS assignee_id
+       FROM ticket t
+       LEFT JOIN user       u ON t.user_id         = u.user_id
+       LEFT JOIN department d ON t.department_id    = d.department_id
+       LEFT JOIN category   c ON t.category_id      = c.category_id
+       LEFT JOIN user       a ON t.assigned_user_id = a.user_id
+       WHERE t.ticket_id = ?`,
       [id],
     );
     if (rows.length === 0) {
